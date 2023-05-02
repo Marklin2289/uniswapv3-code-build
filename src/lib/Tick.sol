@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.14;
 
 library Tick {
@@ -19,6 +19,7 @@ library Tick {
         if (liquidityBefore == 0) {
             tickInfo.initialized = true;
         }
+
         tickInfo.liquidity = liquidityAfter;
     }
 }
