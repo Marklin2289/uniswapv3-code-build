@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.14;
 
-import "forge-std/Test.sol";
+import {Test, stdError} from "forge-std/Test.sol";
 import "./ERC20Mintable.sol";
-import "../src/UniswapV3Pool.sol";
+import "../src/UniswapV3Manager.sol";
 import "./TestUtils.sol";
 import "forge-std/console.sol";
 
-contract UniswapV3PoolTest is Test, TestUtils {
+contract UniswapV3ManagerTest is Test, TestUtils {
     ERC20Mintable token0;
     ERC20Mintable token1;
     UniswapV3Pool pool;
+    UniswapV3Manager manager;
 
     bool transferInMintCallback = true;
     bool transferInSwapCallback = true;
@@ -34,7 +35,6 @@ contract UniswapV3PoolTest is Test, TestUtils {
     }
 
     function testMintSuccess() public {
-        // hard code
         TestCaseParams memory params = TestCaseParams({
             wethBalance: 1 ether,
             usdcBalance: 5000 ether,
@@ -73,18 +73,14 @@ contract UniswapV3PoolTest is Test, TestUtils {
         (bool tickInitialized, uint128 tickLiquidity) = pool.ticks(
             params.lowerTick
         );
-        // console.logInt(params.lowerTick);
-
         assertTrue(tickInitialized);
         assertEq(tickLiquidity, params.liquidity);
 
         (tickInitialized, tickLiquidity) = pool.ticks(params.upperTick);
-
         assertTrue(tickInitialized);
         assertEq(tickLiquidity, params.liquidity);
 
         (uint160 sqrtPriceX96, int24 tick) = pool.slot0();
-
         assertEq(
             sqrtPriceX96,
             5602277097478614198912276234240,
@@ -105,9 +101,10 @@ contract UniswapV3PoolTest is Test, TestUtils {
             uint160(1),
             0
         );
+        manager = new UniswapV3Manager();
 
         vm.expectRevert(encodeError("InvalidTickRange()"));
-        pool.mint(address(this), -887273, 0, 0, "");
+        manager.mint(address(pool), -887273, 0, 0, "");
     }
 
     function testMintInvalidTickRangeUpper() public {
@@ -117,9 +114,10 @@ contract UniswapV3PoolTest is Test, TestUtils {
             uint160(1),
             0
         );
+        manager = new UniswapV3Manager();
 
         vm.expectRevert(encodeError("InvalidTickRange()"));
-        pool.mint(address(this), 0, 887273, 0, "");
+        manager.mint(address(pool), 0, 887273, 0, "");
     }
 
     function testMintZeroLiquidity() public {
@@ -129,9 +127,10 @@ contract UniswapV3PoolTest is Test, TestUtils {
             uint160(1),
             0
         );
+        manager = new UniswapV3Manager();
 
         vm.expectRevert(encodeError("ZeroLiquidity()"));
-        pool.mint(address(this), 0, 1, 0, "");
+        manager.mint(address(pool), 0, 1, 0, "");
     }
 
     function testMintInsufficientTokenBalance() public {
@@ -149,13 +148,19 @@ contract UniswapV3PoolTest is Test, TestUtils {
         });
         setupTestCase(params);
 
-        vm.expectRevert(InsufficientInputAmount.selector);
-        pool.mint(
-            address(this),
+        bytes memory extra = encodeExtra(
+            address(token0),
+            address(token1),
+            address(this)
+        );
+
+        vm.expectRevert(stdError.arithmeticError);
+        manager.mint(
+            address(pool),
             params.lowerTick,
             params.upperTick,
             params.liquidity,
-            ""
+            extra
         );
     }
 
@@ -176,27 +181,19 @@ contract UniswapV3PoolTest is Test, TestUtils {
 
         uint256 swapAmount = 42 ether; // 42 USDC
         token1.mint(address(this), swapAmount);
-        token1.approve(address(this), swapAmount);
+        token1.approve(address(manager), swapAmount);
 
-        UniswapV3Pool.CallbackData memory extra = UniswapV3Pool.CallbackData({
-            token0: address(token0),
-            token1: address(token1),
-            payer: address(this)
-        });
+        bytes memory extra = encodeExtra(
+            address(token0),
+            address(token1),
+            address(this)
+        );
 
         int256 userBalance0Before = int256(token0.balanceOf(address(this)));
 
-        //  -----------------------
-        (uint160 sqrtPriceX966, int24 tickk) = pool.slot0();
-        // console.logInt(tickk);
-        // console.log(
-        //     " ~ file: UniswapV3Pool.t.sol:198 ~ testSwapBuyEth ~ sqrtPriceX966:",
-        //     sqrtPriceX966
-        // );
-
-        (int256 amount0Delta, int256 amount1Delta) = pool.swap(
-            address(this),
-            abi.encode(extra)
+        (int256 amount0Delta, int256 amount1Delta) = manager.swap(
+            address(pool),
+            extra
         );
 
         assertEq(amount0Delta, -0.008396714242162444 ether, "invalid ETH out");
@@ -225,11 +222,6 @@ contract UniswapV3PoolTest is Test, TestUtils {
         );
 
         (uint160 sqrtPriceX96, int24 tick) = pool.slot0();
-        // console.logInt(tick);
-        // console.log(
-        //     " ~ file: UniswapV3Pool.t.sol:198 ~ testSwapBuyEth ~ sqrtPriceX96:",
-        //     sqrtPriceX96
-        // );
         assertEq(
             sqrtPriceX96,
             5604469350942327889444743441197,
@@ -253,63 +245,22 @@ contract UniswapV3PoolTest is Test, TestUtils {
             liquidity: 1517882343751509868544,
             currentSqrtP: 5602277097478614198912276234240,
             transferInMintCallback: true,
-            transferInSwapCallback: false,
+            transferInSwapCallback: true,
             mintLiqudity: true
         });
         setupTestCase(params);
 
-        vm.expectRevert(encodeError("InsufficientInputAmount()"));
-        pool.swap(address(this), "");
-    }
+        bytes memory extra = encodeExtra(
+            address(token0),
+            address(token1),
+            address(this)
+        );
 
-    ////////////////////////////////////////////////////////////////////////////
-    //
-    // CALLBACKS
-    //
-    ////////////////////////////////////////////////////////////////////////////
-    function uniswapV3SwapCallback(
-        int256 amount0,
-        int256 amount1,
-        bytes calldata data
-    ) public {
-        if (transferInSwapCallback) {
-            UniswapV3Pool.CallbackData memory extra = abi.decode(
-                data,
-                (UniswapV3Pool.CallbackData)
-            );
-
-            if (amount0 > 0) {
-                IERC20(extra.token0).transferFrom(
-                    extra.payer,
-                    msg.sender,
-                    uint256(amount0)
-                );
-            }
-
-            if (amount1 > 0) {
-                IERC20(extra.token1).transferFrom(
-                    extra.payer,
-                    msg.sender,
-                    uint256(amount1)
-                );
-            }
-        }
-    }
-
-    function uniswapV3MintCallback(
-        uint256 amount0,
-        uint256 amount1,
-        bytes calldata data
-    ) public {
-        if (transferInMintCallback) {
-            UniswapV3Pool.CallbackData memory extra = abi.decode(
-                data,
-                (UniswapV3Pool.CallbackData)
-            );
-
-            IERC20(extra.token0).transferFrom(extra.payer, msg.sender, amount0);
-            IERC20(extra.token1).transferFrom(extra.payer, msg.sender, amount1);
-        }
+        // console.log(ERC20Mintable(token0).balanceOf(address(pool)));
+        // console.log(ERC20Mintable(token1).balanceOf(address(pool)));
+        // console.logBytes(extra);
+        vm.expectRevert(stdError.arithmeticError);
+        manager.swap(address(pool), extra);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -320,11 +271,9 @@ contract UniswapV3PoolTest is Test, TestUtils {
     function setupTestCase(
         TestCaseParams memory params
     ) internal returns (uint256 poolBalance0, uint256 poolBalance1) {
-        //  mint tokens
         token0.mint(address(this), params.wethBalance);
         token1.mint(address(this), params.usdcBalance);
 
-        // define pool;
         pool = new UniswapV3Pool(
             address(token0),
             address(token1),
@@ -332,24 +281,24 @@ contract UniswapV3PoolTest is Test, TestUtils {
             params.currentTick
         );
 
+        manager = new UniswapV3Manager();
+
         if (params.mintLiqudity) {
-            // approve
-            token0.approve(address(this), params.wethBalance);
-            token1.approve(address(this), params.usdcBalance);
+            token0.approve(address(manager), params.wethBalance);
+            token1.approve(address(manager), params.usdcBalance);
 
-            UniswapV3Pool.CallbackData memory extra = UniswapV3Pool
-                .CallbackData({
-                    token0: address(token0),
-                    token1: address(token1),
-                    payer: address(this)
-                });
+            bytes memory extra = encodeExtra(
+                address(token0),
+                address(token1),
+                address(this)
+            );
 
-            (poolBalance0, poolBalance1) = pool.mint(
-                address(this),
+            (poolBalance0, poolBalance1) = manager.mint(
+                address(pool),
                 params.lowerTick,
                 params.upperTick,
                 params.liquidity,
-                abi.encode(extra)
+                extra
             );
         }
 

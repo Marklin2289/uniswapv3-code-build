@@ -8,12 +8,13 @@ import "./interfaces/IUniswapV3SwapCallback.sol";
 import "./lib/Position.sol";
 import "./lib/Tick.sol";
 
+error InsufficientInputAmount();
+
 contract UniswapV3Pool {
     using Tick for mapping(int24 => Tick.Info);
     using Position for mapping(bytes32 => Position.Info);
     using Position for Position.Info;
 
-    error InsufficientInputAmount();
     error InvalidTickRange();
     error ZeroLiquidity();
 
@@ -151,8 +152,8 @@ contract UniswapV3Pool {
 
         uint256 balance1Before = balance1();
         IUniswapV3SwapCallback(msg.sender).uniswapV3SwapCallback(
-            uint256(amount0),
-            uint256(amount1),
+            amount0,
+            amount1,
             data
         );
         if (balance1Before + uint256(amount1) > balance1())
