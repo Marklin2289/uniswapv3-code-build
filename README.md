@@ -55,9 +55,11 @@ NFT and detail is all generated on-chain, by the Nonfungible Token Position Desc
 The entire data of the URI can be stored on-chain, or the token URI can just return a link to an off-chain cache containing the data. When you ask an NFT contract what the token URI for token ID #6969 is, it will retrieve or calculate the URI and pass it back to you. Your application, or Opensea, or whatever, will then parse that information and retrieve the art, generate the text, etc.
 
 For UniV3, the complex code to generate the art and descriptive text for these cards is located in the descriptor contract. Whenever someone asks for the token URI of an LP NFT, the NPM asks the descriptor to generate the card.
+
 ![plot](./asset/image-48.png)
 
 That brings the total ecosystem so far up to this:
+
 ![plot](./asset/image-49.png)
 
 # Periphery Contracts: Router
@@ -65,6 +67,7 @@ That brings the total ecosystem so far up to this:
 So far, we’ve ignored the fact that there is an enormous constellation of UniV3 pools. Among these thousands of contracts, how do you find the pair you need? What if there’s not a pair for your desired swap? That’s not to mention that the UniV3 design patterns require you to call the swaps from a smart contract.
 
 For those of us who don’t want to create custom smart contracts and infrastructure to be able to ape into tokens, Uniswap has provided a way. The router contract serves as an on-chain interface point for swaps. You tell it a token, or series of tokens, to swap between, and it will handle the low-level swap calls and funds transfer to make it all happen.
+
 ![plot](./asset/image-55.png)
 
 # Periphery Contracts: Lenses
