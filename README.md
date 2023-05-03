@@ -30,3 +30,8 @@
     - One and only one pool exists for each allowable combination
 
       ![plot](./asset/image-37.png)
+
+# Core Contracts: The Pool Deployer
+
+This contract gives a very simple and easy way to deploy new pools with a single high-level function call.
+![plot](./asset/image-38.png)
