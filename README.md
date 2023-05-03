@@ -29,4 +29,4 @@
     - Each pool can be interacted with in exactly the same way
     - One and only one pool exists for each allowable combination
 
-![plot](./asset/image-37.png)
+      ![plot](./asset/image-37.png)
