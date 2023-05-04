@@ -98,3 +98,16 @@ Importantly, the governance cannot set the fee of a pool (ex. they can’t set t
 # Wrapping Up
 
 ![plot](./asset/image-58.png)
+
+# Re-using Math Contracts
+
+PRBMath, which is a great library of advanced fixed-point math algorithms. We’ll use mulDiv function to handle overflows when multiplying and then dividing integer numbers.
+TickMath from the original Uniswap V3 repo. This contract implements two functions, getSqrtRatioAtTick and getTickAtSqrtRatio, which convert
+sqrt(P)’s to ticks and back.
+
+```
+sqrt(P(i)) = sqrt(1.0001**i) = 1.0001**(i/2) ;
+i = log(sqrt(1.0001))sqrt(P(i));
+```
+
+# Tick Bitmap Index
