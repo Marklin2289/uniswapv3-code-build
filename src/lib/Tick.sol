@@ -16,6 +16,8 @@ library Tick {
         uint128 liquidityBefore = tickInfo.liquidity;
         uint128 liquidityAfter = liquidityBefore + liquidityDelta;
 
+        // set to true if liquidity is added to an empty tick
+        // or removed from a non-empty tick
         flipped = (liquidityAfter == 0) != (liquidityBefore == 0);
 
         if (liquidityBefore == 0) {

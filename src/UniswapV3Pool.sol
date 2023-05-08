@@ -105,6 +105,8 @@ contract UniswapV3Pool {
 
         if (flippedLower) tickBitmap.flipTick(lowerTick, 1);
 
+        if (flippedUpper) tickBitmap.flipTick(upperTick, 1);
+
         Position.Info storage position = positions.get(
             owner,
             lowerTick,

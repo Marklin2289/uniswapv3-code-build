@@ -98,7 +98,7 @@ amount_out = calc_amount1(liq, price_next, sqrtp_cur)
 print("ETH in:", amount_in / eth)
 print("USDC out:", amount_out / eth)
 
-tick = 85176
+tick = 200826
 word_pos = tick >> 8 # or tick // 2**8
 bit_pos = tick % 256
 print(f"Word {word_pos}, bit {bit_pos}")
