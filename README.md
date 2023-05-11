@@ -110,4 +110,8 @@ sqrt(P(i)) = sqrt(1.0001**i) = 1.0001**(i/2) ;
 i = log(sqrt(1.0001))sqrt(P(i));
 ```
 
-# Tick Bitmap Index
+# Over View :
+
+![plot](./asset/totalView.png)
+![plot](./asset/factoryView.png)
+![plot](./asset/NFTManagerView.png)
