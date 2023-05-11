@@ -1,6 +1,8 @@
 # Uniswap V3 smart contract learning and rebuild
 
-- using solidity and foundry testing
+- Credit to : [Uniswap V3 Development Book](https://uniswapv3book.com/)
+
+* using solidity and foundry testing
 
 # tips:
 
@@ -9,7 +11,7 @@
 
 # Core Contracts:
 
-[Credit To:](https://bowtiedisland.com/concentrated-liquidity-uniswap-v3-overview/) https://bowtiedisland.com/concentrated-liquidity-uniswap-v3-overview/
+Credit to : [bowtiedisland :](https://bowtiedisland.com/concentrated-liquidity-uniswap-v3-overview/) https://bowtiedisland.com/concentrated-liquidity-uniswap-v3-overview/
 
 - Permissionless access
 - Permissionless operation
